@@ -14,7 +14,11 @@
   <test_depend>ament_pep257</test_depend>
   <test_depend>python3-pytest</test_depend>
 
-  <export>
+  <depend>gazebo_ros</depend>
+  <export> 
+    <!-- <gazebo_ros gazebo_model_path="${prefix}/models"/>  -->
+    <!-- <gazebo_ros gazebo_media_path="${prefix}/models"/>  -->
+    
     <build_type>ament_python</build_type>
   </export>
 </package>

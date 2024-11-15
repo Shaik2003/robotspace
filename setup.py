@@ -14,6 +14,9 @@ setup(
         ('share/' + package_name, ['package.xml']),
         (os.path.join('share', package_name, 'launch'), glob(os.path.join('launch', '*launch.[pxy][yma]*'))),
         (os.path.join('share', package_name, 'description'), glob(os.path.join('description', '*.[xacro]*'))),
+        # (os.path.join('share', package_name, 'models'), glob(os.path.join('models','*','*.*'))),
+        # (os.path.join('share', package_name, 'models'), glob(os.path.join('models','*','*','*','*.*'))),
+        (os.path.join('share', package_name, 'worlds'), glob(os.path.join('worlds', '*.[world]*'))),
         (os.path.join('share', package_name, 'config'), glob(os.path.join('config', '*.[yaml]*'))),
 
 
@@ -27,7 +30,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'diff_drive = rs_diff.diff_drive:main'
+            'diff_drive = rs_diff.diff_drive:main',
+            'aruco_detect = rs_diff.aruco_detect:main'
         ],
     },
 )
