@@ -2,6 +2,8 @@
 
 Video Link: https://drive.google.com/file/d/1UHkp6wwt64WuHk5xACGZ7l9VKJ7c2vkE/view?usp=sharing
 
+Report Link: https://docs.google.com/document/d/1x4QmpE42ce5jH7HdlVXX9nfHbQwoSOKHOGn5wVwzkeg/edit?usp=sharing
+
 ## Nodes:
 
 ### aruco_detect
