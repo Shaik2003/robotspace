@@ -15,8 +15,9 @@ import math as math
 import os
 nodename= os.path.splitext(os.path.basename(__file__))[0]
 
-DOCKING_DISTANCE = 0.1
-V_MAX = 3.0
+DOCKING_DISTANCE = 0.8
+MIN_ERR_DIST = 0.01
+V_MAX = 0.5
 
 class agv(Node):
 
@@ -36,8 +37,8 @@ class agv(Node):
         self.goal = []
 
         self.prevEtheta = 0
-        self.Kp = 0.5
-        self.Kd = 1
+        self.Kp = 1
+        self.Kd = 0.1
         self.Kv = 1
 
         self.vel_pub = self.create_publisher(Twist, '/cmd_vel', 10)
@@ -82,13 +83,14 @@ class agv(Node):
 
         self.global_marker_pos.x = xr*math.cos(self.current_bot_pos.theta) - yr*math.sin(self.current_bot_pos.theta)
         self.global_marker_pos.y = xr*math.sin(self.current_bot_pos.theta) + yr*math.cos(self.current_bot_pos.theta)
-        thetar += self.current_bot_pos.theta
+        thetar = self.current_bot_pos.theta - thetar
         self.global_marker_pos.theta = np.arctan2(math.sin(thetar), math.cos(thetar))
         
         self.dockStationPos.x = self.global_marker_pos.x - DOCKING_DISTANCE*math.cos(self.global_marker_pos.theta)
-        self.dockStationPos.y = self.global_marker_pos.y + DOCKING_DISTANCE*math.sin(self.global_marker_pos.theta)
+        self.dockStationPos.y = self.global_marker_pos.y - DOCKING_DISTANCE*math.sin(self.global_marker_pos.theta)
         self.dockStationPos.theta = self.global_marker_pos.theta
 
+        # print(self.dockStationPos.x, self.dockStationPos.y, self.dockStationPos.theta)
         self.go_to_goal()
 
     def goal_handler(self):
@@ -103,21 +105,26 @@ class agv(Node):
 
     def go_to_goal(self):
         if self.goal:
-            print("yaaay")
             dx = self.goal.x - self.current_bot_pos.x
             dy = self.goal.y - self.current_bot_pos.y
 
-            desTheta = np.arctan2(dy, dx)
+            desR = (self.goal.x**2 + self.goal.y**2)**0.5
+            curR = (self.current_bot_pos.x**2 + self.current_bot_pos.y**2)**0.5
+            eR = desR - curR
+            
+            if(eR < MIN_ERR_DIST):
+                # eR = 0.0
+                desTheta = self.dockStationPos.theta
+            else:
+                desTheta = np.arctan2(dy, dx)
             
             eTheta = np.arctan2(math.sin(desTheta - self.current_bot_pos.theta), math.cos(desTheta - self.current_bot_pos.theta))
 
             omega = self.Kp*eTheta + self.Kd*(eTheta - self.prevEtheta)
-            omega = np.arctan2(math.sin(omega), math.cos(omega))
+            # omega = np.arctan2(math.sin(omega), math.cos(omega))
             
-            desR = (self.goal.x**2 + self.goal.y**2)**0.5
-            curR = (self.current_bot_pos.x**2 + self.current_bot_pos.y**2)**0.5
+            # print("yaaay:", desTheta, self.current_bot_pos.theta)
 
-            eR = desR - curR
             vel = self.Kv*eR
             if vel > V_MAX:
                 vel = V_MAX
@@ -125,7 +132,8 @@ class agv(Node):
             elif vel < -V_MAX:
                 vel = -V_MAX
             
-            print(vel, omega)
+            # print(vel, omega)
+            print("error: ", eTheta, eR)
             self.prevEtheta = eTheta
 
             u = Twist()

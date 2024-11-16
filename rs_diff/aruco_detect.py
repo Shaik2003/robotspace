@@ -83,8 +83,7 @@ class dockStations(Node):
 
                 self.poses_pub.publish(pose)
             except Exception as e:
-                print(e)
-
+                return
 
         
 def main(args=None):

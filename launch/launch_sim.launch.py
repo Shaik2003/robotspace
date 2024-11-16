@@ -28,7 +28,6 @@ def generate_launch_description():
     # Set the path to the SDF model files.
     gazebo_models_path = os.path.join(pkg_path, 'models')
     os.environ["GAZEBO_MODEL_PATH"] = gazebo_models_path
-    print("heyyyyyyyyyyyy", gazebo_models_path)
     os.environ["GAZEBO_RESOURCE_PATH"] = os.path.join('/usr/share/gazebo-11')
     os.environ["GAZEBO_PLUGIN_PATH"] = os.path.join(pkg_path, 'lib')
 
