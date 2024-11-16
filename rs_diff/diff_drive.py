@@ -100,61 +100,64 @@ class agv(Node):
         self.dockStationPos.theta = self.global_marker_pos.theta
 
         print(self.dockStationPos.x, self.dockStationPos.y, self.dockStationPos.theta)
-        self.goal_handler()
+        self.goal_manager()
 
     # manages the next state the robot needs to get to
-    def goal_handler(self):
+    def goal_manager(self):
+        # assign next marker as goal if goal is reached 
         if self.goalReached:
             if self.des_docks_queue:
                 self.desired_marker_id = self.des_docks_queue.pop()
                 self.goalReached = False
 
-        # elif self.goal is None:
+        # keep updating goal location whenever the marker comes into view
         else:
             if self.dockerFound:
                 self.goal = deepcopy(self.dockStationPos)
         
 
-    # pid controller
+    # controller
     def go_to_goal(self):
+        # if goal has been assigned
         if self.goal:
+            # calculate error
             dx = self.goal.x - self.current_bot_pos.x
             dy = self.goal.y - self.current_bot_pos.y
 
+            # calc direction the bot must turn to face the goal
             desR = (self.goal.x**2 + self.goal.y**2)**0.5
             curR = (self.current_bot_pos.x**2 + self.current_bot_pos.y**2)**0.5
             eR = desR - curR
             
+            # since we are going for polar coordinate system, assign goal orientation angle once close to the position.
             if(eR < MIN_ERR_DIST):
                 # eR = 0.0
                 desTheta = self.dockStationPos.theta
             else:
                 desTheta = np.arctan2(dy, dx)
             
+            # error for theta. arctan2 is used to keep theta between -pi to pi
             eTheta = np.arctan2(math.sin(desTheta - self.current_bot_pos.theta), math.cos(desTheta - self.current_bot_pos.theta))
 
             omega = self.Kp*eTheta + self.Kd*(eTheta - self.prevEtheta)
-            # omega = np.arctan2(math.sin(omega), math.cos(omega))
             
-            # print("yaaay:", desTheta, self.current_bot_pos.theta)
-
             vel = self.Kvp*eR + self.Kvd*(eR - self.prevEr)
 
+            # limit omega with a minimum radius of curvature so as to avoid skidding or toppling over while takign turns
             if abs(omega) > abs(vel)/R_MIN:
-                # print("kuch horaha heii")
                 if omega>0:
                     omega = abs(vel)/R_MIN
                 else:
                     omega = -abs(vel)/R_MIN
 
+            # limit velocity
             if vel > V_MAX:
                 vel = V_MAX
             
             elif vel < -V_MAX:
                 vel = -V_MAX
             
-            # print(vel, omega)
-            # print("error: ", eTheta, eR)
+            # update previous error
             self.prevEtheta = eTheta
             self.prevEr = eR
 
@@ -162,17 +165,18 @@ class agv(Node):
             u.linear.x = vel
             u.angular.z = omega
 
+            # publish velocities
             self.vel_pub.publish(u)
         
         else:
-            self.goal_handler()
+            self.goal_manager()
 
 
 def main(args=None):
     rclpy.init(args=args)
 
     diff_agv = agv()
-    diff_agv.goal_handler()
+    diff_agv.goal_manager()
     # while not rclpy.shutdown():
     # while True:
     #     diff_agv.

@@ -20,6 +20,7 @@ class dockStations(Node):
         super().__init__(nodename)
         self.get_logger().info(nodename+" started")
 
+        # some subscribers and publishers
         self.create_subscription(
             Image, "/camera/image_raw", self.image_callback, qos_profile_sensor_data
         )
@@ -44,6 +45,7 @@ class dockStations(Node):
         self.aruco_parameters = cv2.aruco.DetectorParameters_create()
         self.bridge = CvBridge()
 
+    # store camera matrices
     def info_callback(self, info_msg):
         self.info_msg = info_msg
         self.intrinsic_mat = np.reshape(np.array(self.info_msg.k), (3, 3))
@@ -51,9 +53,11 @@ class dockStations(Node):
         # Assume that camera parameters will remain the same...
         self.destroy_subscription(self.info_sub)
 
+    # recieve what aruco marker id to send data of from diff_drive
     def set_marker_id(self, id):
         self.desiredMarkerId[0] = id.data
 
+    # receive camera data and aruco marker id, process pose2D of aruco marker and send relative location
     def image_callback(self, img_msg):
         if self.info_msg is None:
             self.get_logger().warn("No camera info has been received!")
@@ -67,6 +71,7 @@ class dockStations(Node):
 
         if marker_ids is not None:
             try: 
+                # check if marker_id received from diff_drive matches to one of the markers selected, if yes, then calc relative loc and send
                 i = np.where(marker_ids == self.desiredMarkerId)[0][0]
                 
                 rvecs, tvecs, _ = cv2.aruco.estimatePoseSingleMarkers(
@@ -82,6 +87,7 @@ class dockStations(Node):
                 pose.theta = tf_transformations.euler_from_matrix(rot_matrix)[1]    #facing towards left of bot is positive
 
                 self.poses_pub.publish(pose)
+                
             except Exception as e:
                 # print(e)
                 return
