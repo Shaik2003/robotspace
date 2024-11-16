@@ -1,8 +1,8 @@
-### Aruco Marker based Docking Differential Robot
+# Aruco Marker based Docking Differential Robot
 
 ## Nodes:
 
-# aruco_detect
+### aruco_detect
 Reads data from camera, identifies aruco markers, receives marker id and selects the appropriate marker to calculate relative location to the bot and sends the location data in Pose2D format. This is done to reduce traffic of multiple poses of all aruco markers being detected.
     
     * Subscribes to "/desired_marker_id" to get what marker id 
@@ -11,7 +11,7 @@ Reads data from camera, identifies aruco markers, receives marker id and selects
     
     * Publishes to "/aruco_pos" the positin of aruco marker detected
 
-# diff_drive
+### diff_drive
 Contains the controller for the bot. Goal manager and accordingly allots next goal for the bot to go to and accordingly assigns marker id and publishes to get dock station location. 
 
 Transforms all coordinates to global coordinates to keep things simple. Converts marker location to global, also gets current bot location from "/odom". 
