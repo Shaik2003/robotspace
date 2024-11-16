@@ -16,7 +16,7 @@ import os
 nodename= os.path.splitext(os.path.basename(__file__))[0]
 
 DOCKING_DISTANCE = 0.3
-ENTRANCE_DISTANCE = 0.5
+# ENTRANCE_DISTANCE = 0.5
 MIN_ERR_DIST = 0.05
 V_MAX = 2.0
 R_MIN = 0.05
@@ -95,6 +95,7 @@ class agv(Node):
         thetar = self.current_bot_pos.theta - thetar
         self.global_marker_pos.theta = np.arctan2(math.sin(thetar), math.cos(thetar))
         
+        # docking point is roughly 30 cm away perpendicular to the aruco marker.
         self.dockStationPos.x = self.global_marker_pos.x - DOCKING_DISTANCE*math.cos(self.global_marker_pos.theta)
         self.dockStationPos.y = self.global_marker_pos.y - DOCKING_DISTANCE*math.sin(self.global_marker_pos.theta)
         self.dockStationPos.theta = self.global_marker_pos.theta
