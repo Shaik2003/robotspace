@@ -9,7 +9,7 @@ import tf_transformations
 
 from sensor_msgs.msg import CameraInfo, Image
 from std_msgs.msg import Int8
-from geometry_msgs.msg import Pose2D, Pose
+from geometry_msgs.msg import Pose2D
 
 import os
 nodename= os.path.splitext(os.path.basename(__file__))[0]
@@ -32,12 +32,12 @@ class dockStations(Node):
             CameraInfo, "/camera/camera_info", self.info_callback, qos_profile_sensor_data
         )
 
-        self.poses_pub = self.create_publisher(Pose, "aruco_poses", 10)
+        self.poses_pub = self.create_publisher(Pose2D, "/aruco_pos", 10)
 
         self.info_msg = None
         self.intrinsic_mat = None
         self.distortion = None
-        self.desiredMarkerId = None
+        self.desiredMarkerId = [[]]
         self.marker_size = 0.4
 
         self.aruco_dictionary = cv2.aruco.Dictionary_get(cv2.aruco.DICT_4X4_50)
@@ -52,7 +52,7 @@ class dockStations(Node):
         self.destroy_subscription(self.info_sub)
 
     def set_marker_id(self, id):
-        self.desiredMarkerId = id
+        self.desiredMarkerId[0] = id.data
 
     def image_callback(self, img_msg):
         if self.info_msg is None:
@@ -60,17 +60,6 @@ class dockStations(Node):
             return
         
         cv_image = self.bridge.imgmsg_to_cv2(img_msg, desired_encoding="mono8")
-        # markers = ArucoMarkers()
-        # pose_array = PoseArray()
-        # if self.camera_frame == "":
-        #     markers.header.frame_id = self.info_msg.header.frame_id
-        #     pose_array.header.frame_id = self.info_msg.header.frame_id
-        # else:
-        #     markers.header.frame_id = self.camera_frame
-        #     pose_array.header.frame_id = self.camera_frame
-
-        # markers.header.stamp = img_msg.header.stamp
-        # pose_array.header.stamp = img_msg.header.stamp
 
         corners, marker_ids, rejected = cv2.aruco.detectMarkers(
             cv_image, self.aruco_dictionary, parameters=self.aruco_parameters
@@ -78,28 +67,23 @@ class dockStations(Node):
 
         if marker_ids is not None:
             try: 
-                # i = marker_ids.index(self.desiredMarkerId)
-                i = 0
+                i = np.where(marker_ids == self.desiredMarkerId)[0][0]
+                
                 rvecs, tvecs, _ = cv2.aruco.estimatePoseSingleMarkers(
                     corners, self.marker_size, self.intrinsic_mat, self.distortion
                 )
-                pose = Pose()
-                pose.position.x = tvecs[i][0][0]
-                pose.position.y = tvecs[i][0][1]
-                pose.position.z = tvecs[i][0][2]
+                pose = Pose2D()
+                # pose.position.y = tvecs[i][0][1]
+                pose.x = tvecs[i][0][2]    #how far from the bot
+                pose.y = -tvecs[i][0][0]    #left is negetive
 
                 rot_matrix = np.eye(4)
                 rot_matrix[0:3, 0:3] = cv2.Rodrigues(np.array(rvecs[i][0]))[0]
-                quat = tf_transformations.quaternion_from_matrix(rot_matrix)
+                pose.theta = tf_transformations.euler_from_matrix(rot_matrix)[1]    #facing towards left of bot is positive
 
-                pose.orientation.x = quat[0]
-                pose.orientation.y = quat[1]
-                pose.orientation.z = quat[2]
-                pose.orientation.w = quat[3]
-                
                 self.poses_pub.publish(pose)
-            except:
-                return
+            except Exception as e:
+                print(e)
 
 
         
