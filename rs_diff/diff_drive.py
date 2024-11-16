@@ -15,9 +15,11 @@ import math as math
 import os
 nodename= os.path.splitext(os.path.basename(__file__))[0]
 
-DOCKING_DISTANCE = 0.8
-MIN_ERR_DIST = 0.5
-V_MAX = 1.0
+DOCKING_DISTANCE = 0.3
+ENTRANCE_DISTANCE = 0.5
+MIN_ERR_DIST = 0.05
+V_MAX = 2.0
+R_MIN = 0.05
 
 class agv(Node):
 
@@ -32,15 +34,17 @@ class agv(Node):
         self.dockStationPos = Pose2D()
         self.dockerFound = False
         self.goalReached = True
-        self.des_docks_queue = [1]
+        self.des_docks_queue = [0]
         self.goal_queue = []
         self.goal = None
 
         # some static variables
         self.prevEtheta = 0
-        self.Kp = 1.5
-        self.Kd = 0.1
-        self.Kv = 1
+        self.prevEr = 0
+        self.Kp = 15
+        self.Kd = 60
+        self.Kvp = 10
+        self.Kvd = 80
 
         # defining publishers & subscribers
         self.vel_pub = self.create_publisher(Twist, '/cmd_vel', 10)
@@ -133,7 +137,15 @@ class agv(Node):
             
             # print("yaaay:", desTheta, self.current_bot_pos.theta)
 
-            vel = self.Kv*eR
+            vel = self.Kvp*eR + self.Kvd*(eR - self.prevEr)
+
+            if abs(omega) > abs(vel)/R_MIN:
+                # print("kuch horaha heii")
+                if omega>0:
+                    omega = abs(vel)/R_MIN
+                else:
+                    omega = -abs(vel)/R_MIN
+
             if vel > V_MAX:
                 vel = V_MAX
             
@@ -141,8 +153,9 @@ class agv(Node):
                 vel = -V_MAX
             
             # print(vel, omega)
-            print("error: ", eTheta, eR)
+            # print("error: ", eTheta, eR)
             self.prevEtheta = eTheta
+            self.prevEr = eR
 
             u = Twist()
             u.linear.x = vel
