@@ -119,6 +119,11 @@ def generate_launch_description():
         arguments=["joint_broad"],
     )
 
+    aruco_detection = Node(
+        package="rs_diff",
+        executable="aruco_detect"
+    )
+
     return LaunchDescription([
         declare_simulator_cmd,
         declare_use_sim_time_cmd,
@@ -130,6 +135,7 @@ def generate_launch_description():
         start_gazebo_client_cmd,
         spawn_entity,
         rsp,
+        aruco_detection,
         # diff_drive_spawner,
         # joint_broad_spawner
     ])

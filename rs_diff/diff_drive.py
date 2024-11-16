@@ -16,8 +16,8 @@ import os
 nodename= os.path.splitext(os.path.basename(__file__))[0]
 
 DOCKING_DISTANCE = 0.8
-MIN_ERR_DIST = 0.01
-V_MAX = 0.5
+MIN_ERR_DIST = 0.5
+V_MAX = 1.0
 
 class agv(Node):
 
@@ -25,22 +25,24 @@ class agv(Node):
         super().__init__(nodename)
         self.get_logger().info(nodename+" started")
         
-
-        self.desired_marker_id = 0
+        # defining global variables
+        self.desired_marker_id = None
         self.current_bot_pos = Pose2D()
         self.global_marker_pos = Pose2D()
         self.dockStationPos = Pose2D()
         self.dockerFound = False
         self.goalReached = True
-        self.des_docks_queue = [0]
+        self.des_docks_queue = [1]
         self.goal_queue = []
-        self.goal = []
+        self.goal = None
 
+        # some static variables
         self.prevEtheta = 0
-        self.Kp = 1
+        self.Kp = 1.5
         self.Kd = 0.1
         self.Kv = 1
 
+        # defining publishers & subscribers
         self.vel_pub = self.create_publisher(Twist, '/cmd_vel', 10)
         self.marker_id_pub = self.create_publisher(Int8, "/desired_marker_id", 10)
 
@@ -52,7 +54,7 @@ class agv(Node):
             Odometry, "/odom", self.curr_pos_update, qos_profile_sensor_data
         )
 
-
+    # takes odometry data to update current robots global position, and then calls the control system
     def curr_pos_update(self, msg):
         self.current_bot_pos.x = msg.pose.pose.position.x
         self.current_bot_pos.y = msg.pose.pose.position.y
@@ -69,12 +71,15 @@ class agv(Node):
         self.go_to_goal()
         # print(self.current_bot_pos.y, self.current_bot_pos.x, self.current_bot_pos.theta)
         
-
+    # sets the marker id needed and sends to aruco detector so that appropriate coordinates are received
     def target_dock_station(self):
         dock_id = Int8()
-        dock_id.data = 0
-        self.marker_id_pub.publish(dock_id)
 
+        if self.desired_marker_id is not None:
+            dock_id.data = int(self.desired_marker_id)
+            self.marker_id_pub.publish(dock_id)
+
+    # callback for aruco detection topic, calculates global state of the marker, also sets teh docking station var 
     def marker_pos_calc(self, msg):
         xr = msg.x
         yr = msg.y
@@ -91,18 +96,21 @@ class agv(Node):
         self.dockStationPos.theta = self.global_marker_pos.theta
 
         # print(self.dockStationPos.x, self.dockStationPos.y, self.dockStationPos.theta)
-        self.go_to_goal()
+        self.goal_handler()
 
+    # manages the next state the robot needs to get to
     def goal_handler(self):
-        if not self.goal:
-            if self.dockerFound:
-                self.goal = deepcopy(self.dockStationPos)
-        
-        elif self.goalReached:
-            if not self.des_docks_queue:
+        if self.goalReached:
+            if self.des_docks_queue:
                 self.desired_marker_id = self.des_docks_queue.pop()
                 self.goalReached = False
 
+        elif self.goal is None:
+            if self.dockerFound:
+                self.goal = deepcopy(self.dockStationPos)
+        
+
+    # pid controller
     def go_to_goal(self):
         if self.goal:
             dx = self.goal.x - self.current_bot_pos.x
@@ -150,7 +158,7 @@ def main(args=None):
     rclpy.init(args=args)
 
     diff_agv = agv()
-
+    diff_agv.goal_handler()
     # while not rclpy.shutdown():
     # while True:
     #     diff_agv.

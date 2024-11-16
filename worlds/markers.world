@@ -15,6 +15,12 @@
       <uri>model://aruco_marker</uri>
       <pose frame=''>3.26157 -1.2 0 0 -0 -2.6</pose>
     </include>
+
+    <include>
+      <name>aruco_marker02</name>
+      <uri>model://aruco_marker02</uri>
+      <pose frame=''>5 1 0 0 -0 3.0</pose>
+    </include>
     
 
   </world>
