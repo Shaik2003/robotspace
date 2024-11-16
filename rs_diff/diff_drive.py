@@ -90,8 +90,8 @@ class agv(Node):
         thetar = msg.theta
         self.dockerFound = True
 
-        self.global_marker_pos.x = xr*math.cos(self.current_bot_pos.theta) - yr*math.sin(self.current_bot_pos.theta)
-        self.global_marker_pos.y = xr*math.sin(self.current_bot_pos.theta) + yr*math.cos(self.current_bot_pos.theta)
+        self.global_marker_pos.x = xr*math.cos(self.current_bot_pos.theta) - yr*math.sin(self.current_bot_pos.theta) + self.current_bot_pos.x
+        self.global_marker_pos.y = xr*math.sin(self.current_bot_pos.theta) + yr*math.cos(self.current_bot_pos.theta) + self.current_bot_pos.y
         thetar = self.current_bot_pos.theta - thetar
         self.global_marker_pos.theta = np.arctan2(math.sin(thetar), math.cos(thetar))
         
@@ -99,7 +99,7 @@ class agv(Node):
         self.dockStationPos.y = self.global_marker_pos.y - DOCKING_DISTANCE*math.sin(self.global_marker_pos.theta)
         self.dockStationPos.theta = self.global_marker_pos.theta
 
-        # print(self.dockStationPos.x, self.dockStationPos.y, self.dockStationPos.theta)
+        print(self.dockStationPos.x, self.dockStationPos.y, self.dockStationPos.theta)
         self.goal_handler()
 
     # manages the next state the robot needs to get to
@@ -109,7 +109,8 @@ class agv(Node):
                 self.desired_marker_id = self.des_docks_queue.pop()
                 self.goalReached = False
 
-        elif self.goal is None:
+        # elif self.goal is None:
+        else:
             if self.dockerFound:
                 self.goal = deepcopy(self.dockStationPos)
         
