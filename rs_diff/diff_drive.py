@@ -34,7 +34,7 @@ class agv(Node):
         self.dockStationPos = Pose2D()
         self.dockerFound = False
         self.goalReached = True
-        self.des_docks_queue = [0]
+        self.des_docks_queue = [1]
         self.goal_queue = []
         self.goal = None
 
