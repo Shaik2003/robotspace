@@ -8,6 +8,8 @@ Reads data from camera, identifies aruco markers, receives marker id and selects
     * Subscribes to "/desired_marker_id" to get what marker id 
     * Subscribes to "/camera/image_raw" to get camera feed
     * Subscribes to "/camera/camera_info" to get camera info
+    
+    * Publishes to "/aruco_pos" the positin of aruco marker detected
 
 # diff_drive
 Contains the controller for the bot. Goal manager and accordingly allots next goal for the bot to go to and accordingly assigns marker id and publishes to get dock station location. 
@@ -18,6 +20,11 @@ Control system deals with a polar coordinate frame so that its easier with a dif
 
 Omega limiting is used where we reduce omega in high speeds by limiting the radius of curvature
 
+    * Subscribes to "/aruco_pos" to get relative position of the aruco marker
+    * Subscribes to "/odom" to get current position of the bot
+    
+    * Publishes to "/cmd_vel" velocities of the bot
+    * Publishes to "/desired_marker_id" the aurco marker id it needs location of
 
 ## Build and Run:
 
