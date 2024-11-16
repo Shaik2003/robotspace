@@ -31,3 +31,9 @@ Omega limiting is used where we reduce omega in high speeds by limiting the radi
 The package is developed on ros-humble running on docker. They need to be downloaded and setup according to their respective documentations.
 
 *Copy the model files from* `/rs_diff/src/models` *and paste it into* `/install/rs_diff/share/rs_diff/models` *for the aruco markers to launch after colcon building the package*
+
+## Potential Improvements:
+
+* Control system could be furthere optimised. Radius of curvature could be reduced, increasing omega allowance.
+* The skeleton of the code is made so that multiple states can be passed as a queue to the bot. The rest can be filled to make a complete warehouse robot jumping from one dockstation to another.
+* Obstacle detection and avoidance can be implemented using a lidar.
